@@ -571,7 +571,7 @@ La fonction bivar_quali_quanti() du package personnalisé permet de calculer la 
 La fonction renvoie une liste qui contient la valeur du p et le Tau de Kendall. Cette liste peut être sauvegardée dans un nouvelle objet et on peut ensuite accéder aux deux valeurs à l'aide du signe de dollar (\$).
 
 ```{r p_T_quali_quanti}
-p_Tau_polint_revenu = bivar_quali_quanti(base$polint, base$revenu, Y_ord = TRUE)
+p_Tau_polint_revenu = bivar_quali_quanti(base$polint, base$revenu, y_ord = TRUE)
 
 p = p_Tau_polint_revenu$p_value
 p
