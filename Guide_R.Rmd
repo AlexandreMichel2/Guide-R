@@ -691,8 +691,9 @@ Avant de croiser deux variables quantitatives entre elles, il est de mise d'effe
 freq_age <- univar_quanti(base$age, na.rm = TRUE)
 freq_revenu <- univar_quanti(base$income, na.rm = TRUE)
 
+base$age <- base$an_naissance
 base$age[base$age == 1000] <- NA
-base$age <- 2015 - base$age
+base$age <- 2015 - as.numeric(base$age)
 
 base$revenu <- base$income
 base$revenu[base$revenu <= 5000 | base$revenu >= 250000] <- NA
