@@ -90,7 +90,7 @@ Voici comment installer et activer le [package personnalisé](https://github.com
 ```{r install_packages, eval=FALSE, results='hide'}
 install.packages("devtools")
 library("devtools")
-install_github("Michaud2/Package-R-EPA", ref = "development", force = TRUE)
+install_github("AlexandreMichel2/Package-R-EPA", ref = "development", force = TRUE)
 library("EPA")
 ```
 
