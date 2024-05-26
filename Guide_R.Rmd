@@ -1,7 +1,7 @@
 ---
 title: "Guide d'introduction à l'utilisation de R"
-author: "Alexandre Michel"
-date: "`r Sys.Date()`"
+author: "Par Alexandre Michel"
+date: "À jour le `r Sys.Date()`"
 output:
   html_document:
     toc: yes
@@ -84,9 +84,14 @@ base <- as_tibble(base)
 # results = "hide" --> Le résultat du code n'apparaitra pas sur le fichier HTML produit
 ```
 
+# **GUIDE EN FORMAT PDF**
+
+Cette mini page web est une représentation synthèse d'un guide d'introduction à l'utilisation de RStudio plus exhaustif en format PDF ([cliquer ici pour télécharger](https://www.dropbox.com/scl/fi/wmx2qy4kdrr9yr3yq34e9/Guide_RStudio.pdf?rlkey=spy3id33wclrr4wddn094q8nb&dl=1)) que j'ai moi-même rédigé au fil de mes 6 ans d'expériences comme chargé de laboratoire pour Khalid Adnane, M.A., dans le cadre du cours de premier cycle en politiques appliquées à l'université  de Sherbrooke GEP111 - Les statistiques en sciences politiques. J'ai également créé un court aide mémoire ([cliquer ici pour télécharger](https://www.dropbox.com/scl/fi/rzdwlhwxs8ylqiuj3p19j/Aide_Memoire_R.pdf?rlkey=mmp3ls6pfov9edb6d4phxhzai&dl=1)) pour facilier les copier-coller des fonctions les plus utilisées.
+
+
 # **INSTALLATION ET ACTIVATION DES PACKAGES**
 
-Voici comment installer et activer le [package personnalisé](https://github.com/Michaud2/Package-R-EPA) (EPA) que j'ai moi-même créé en parallèle à ce guide :
+Voici comment installer et activer le [package personnalisé](https://github.com/AlexandreMichel2/Package-R-EPA) (EPA) que j'ai moi-même créé en parallèle à ce guide :
 
 ```{r install_packages, eval=FALSE, results='hide'}
 install.packages("devtools")
