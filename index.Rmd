@@ -1,0 +1,779 @@
+---
+title: "Guide d'introduction à l'utilisation de R"
+author: "Par Alexandre Michel"
+date: "À jour le `r Sys.Date()`"
+output:
+  html_document:
+    toc: yes
+    df_print: paged
+params:
+    fichier: "https://dimension.usherbrooke.ca/donnees/base2015CES.csv"
+editor_options: 
+  chunk_output_type: console
+---
+
+```{=html}
+<style type="text/css">
+
+body{ /* Normal  */
+    font-size: 14px;
+    font-family: "Arial";
+  }
+td {  /* Table  */
+  font-size: 12px;
+  font-family: "Arial";
+}
+h1.title {
+  font-size: 38px;
+  font-family: "Arial";
+  color: DarkBlue;
+}
+h1 { /* Header 1 */
+  font-size: 28px;
+  font-family: "Arial";
+  color: Green;
+}
+h2 { /* Header 2 */
+    font-size: 22px;
+    font-family: "Arial";
+    color: Orange;
+}
+h3 { /* Header 3 */
+  font-size: 20px;
+  font-family: "Arial";
+  color: Red;
+}
+h4 { /* Header 4 */
+  font-size: 18px;
+  font-family: "Arial";
+  color: DarkRed;
+}
+code.r{ /* Code block */
+    font-family: "Arial";
+    font-size: 12px;
+}
+pre { /* Code block - determines code spacing between lines */
+    font-size: 14px;
+}
+</style>
+```
+
+```{r setup, include=FALSE}
+# Titre d'une figure : fig.cap = "..."
+knitr::opts_chunk$set(
+  echo = TRUE,
+  results = "markup",
+  error = FALSE,
+  warning = FALSE,
+  message = FALSE
+)
+readfichier <- function() {
+  params$fichier
+}
+fichier <- as.character(readfichier())
+
+library("devtools")
+library("EPA")
+
+showtext::showtext_opts(dpi = 215)
+
+base <- read.csv2(fichier, header = TRUE, encoding = "UTF-8")
+base <- as_tibble(base)
+
+# echo = FALSE --> Le code n'apparait pas sur le fichier HTML produit
+# results = "hide" --> Le résultat du code n'apparaitra pas sur le fichier HTML produit
+```
+
+# **GUIDE EN FORMAT PDF**
+
+Cette mini page web est une représentation synthèse d'un guide d'introduction à l'utilisation de RStudio plus exhaustif en format PDF ([cliquer ici pour télécharger](https://www.dropbox.com/scl/fi/wmx2qy4kdrr9yr3yq34e9/Guide_RStudio.pdf?rlkey=spy3id33wclrr4wddn094q8nb&dl=1)) que j'ai moi-même rédigé au fil de mes 6 ans d'expériences comme chargé de laboratoire pour Khalid Adnane, M.A., dans le cadre du cours de premier cycle en politiques appliquées à l'université  de Sherbrooke GEP111 - Les statistiques en sciences politiques. J'ai également créé un court aide mémoire ([cliquer ici pour télécharger](https://www.dropbox.com/scl/fi/rzdwlhwxs8ylqiuj3p19j/Aide_Memoire_R.pdf?rlkey=mmp3ls6pfov9edb6d4phxhzai&dl=1)) pour facilier les copier-coller des fonctions les plus utilisées.
+
+
+# **INSTALLATION ET ACTIVATION DES PACKAGES**
+
+Voici comment installer et activer le [package personnalisé](https://github.com/AlexandreMichel2/Package-R-EPA) (EPA) que j'ai moi-même créé en parallèle à ce guide :
+
+```{r install_packages, eval=FALSE, results='hide'}
+install.packages("devtools")
+library("devtools")
+install_github("AlexandreMichel2/Package-R-EPA", ref = "main", force = TRUE)
+library("EPA")
+```
+
+# **IMPORTATION D'UNE BASE DE DONNÉES**
+
+L'importation d'une base de données se fait de la manière la plus facile à l'aide de la fonction importer() qui provient du package personnalisé (EPA). La fonction vous guide dans l'importation de la base en posant quelques questions simples à répondre directement dans la console.
+
+Pour suivre les exemples qui seront présentés dans ce guide, vous pouvez importer la base de données hébergée sur le site Dimension de l'Université de Sherbrooke via le lien suivant : <https://dimension.usherbrooke.ca/donnees/base2015CES.csv>, en spécifiant également le format du fichier de données, ici **.csv (français)**.
+
+```{r base_importer, eval = FALSE}
+base <- importer()
+# OU
+base <- importer(data = "https://dimension.usherbrooke.ca/donnees/base2015CES.csv", format = ".csv_fr")
+```
+
+# **MANIPULATIONS SUR UNE BASE DE DONNÉES**
+
+
+## *Visualiser et explorer une base de données*
+
+Dans une base de données, chaque colonne devrait être une variable (ou champ) et chaque rangée devrait être une observation (ou unité d'analyse). Certaines bases ne sont pas naturellement structurées de cette manière, nous verrons quelques manipulations qui permettent de bien formater une base de données dans cette section.
+
+Pour l'instant, il est possible de visualiser une base de données (ou un objet de type "dataframe" dans R) en exécutant uniquement le nom de la base de données, ou bien en cliquant sur son nom dans la fenêtre « Environment » de R située en haut à droite.
+
+On observe alors que la base de données présentée en exemple contient 43 variables (colonnes) et 7572 observations (rangées). On peut aussi oberser le « type » de chaque variable et son format d'encodage, juste en dessous de son nom. Voici les différents types de variables possibles dans R :
+
+- int = nombres entiers
+- num ou float = nombres décimaux
+- chr = données textuelles
+- logical = valeurs booléennes (TRUE, FALSE)
+- complex = nombres complexes ou imaginaires (nous ne l'utiliserons pas, ou très peu)
+
+```{r base_show}
+base
+```
+
+C'est à cette étape qu'il est nécessaire de bien comprendre les deux éléments centraux d'une base de données : les observations et les variables.
+
+
+### Observations
+
+Il est important de bien comprendre ce que chaque observation (rangée) signifie, ou représente, puisqu'il s'agit là de l'unité d'analyse de la base de données. Qu'est-ce que nous étudions ici? Les données concernent-elles des individus, des agrégats comme des pays ou des villes, des évènements ponctuels, des années, etc?
+
+
+### Variables
+
+Il est aussi primordial de saisir ce que chaque colonne pertinente à l'analyse représente. Chaque colonne étant une variable, elle est mesurée par un indicateur précis dont les valeurs possibles ne sont parfois pas codées de manière très intuitive. C'est pourquoi il est nécessaire de ce référer constamment au **codebook** de la base de données, un document (souvent en format .pdf) qui fait le pont entre le codage des variables dans la base de données sur R et ce qu'elles représentent qualitativement, concrètement.
+
+Le **codebook** est le document le plus important lorsque l'on travaille avec des données complexes. Chaque base de données devrait venir avec un codebook lors de son téléchargement pour que l'utilisateurice comprenne bien quelles sont les valeurs des indicateurs qui sont dans la base de données. Par exemple, les valeurs possibles à une question de sondage du genre "Quelle province du Canada habitez-vous ?" pourrait être des options chiffrées de 1 à 13. Mais qu'est-ce que signifie la réponse 12 à cette question ? Il faudrait donc aller voir dans le codebook pour trouver à quelle province correspond cette valeur !
+
+Pour la base de données qui est utilisée en exemple dans ce guide, le codebook a été synthétisé par le Professeur Jean-Herman Guay et est disponible facilement sur [cette page](https://dimension.usherbrooke.ca/pages/25) du site Dimension.
+
+
+## *Renommer des variables (colonnes)*
+
+On peut renommer des colonnes précises à l'aide de la fonction renommer() qui fait partie du package personnalisé (EPA). On renomme ici les variables "age" et "p.aborig" pour "an_naissance" et "autochtone"
+
+```{r base_rename}
+base <- renommer(base, c("age", "p.aborig"), c("an_naissance", "autochtone"))
+```
+
+## *Recoder les valeurs d'une variable*
+
+On peut recoder une variable de deux manières : avec la fonction recode() ou par des conditions.
+
+
+### La fonction recode() du package car
+
+La fonction recode() possède deux arguments : l'appel à la variable puis les modifications à apporter. Chaque nouvelle valeur est séparée par un point-virgule (;) alors que chaque modification a la structure suivante : ancienne(s)\_valeur(s) = nouvelle_valeur. On peut attribuer la même nouvelle valeur à plusieurs anciennes valeurs, comme c'est le cas ici, en enveloppant les anciennes valeurs avec la fonction c(). Toutes ces modifications doivent se trouver entre deux guillemets, comme vous pouvez l'observer.
+
+On recode ici la variable "autochtone" nouvellement renommée pour en faire une dichotomique (OUI ou NON) plutôt qu'avoir l'appartenance à chaque groupe. À noter que l'on doit nécessairement préciser le package d'où provient la fonction en ajoutant "car::" devant son nom puisqu'elle entre en conflit avec une fonction du même nom du package dplyr.
+
+```{r base_recode_fun}
+base$autochtone <- recode(base$autochtone, "1=0 ; c(2,3,4,5,6)=1 ; else=NA")
+```
+
+### Une ou plusieurs conditions
+
+La condition se lit comme suit : la valeur de la variable représentant l'année de naissance (an_naissance) sera maintenant égale à NA lorsqu'elle correspond à "1000". La nouvelle variable dont les valeurs sont modifiées se trouve avant les crochets [] et l'ancienne variable sur laquelle la condition est testée se trouve à l'intérieur des crochets, avec la condition (constituée d'un opérateur logique et d'une valeur à tester). La nouvelle valeur attribuée à la variable lorsque la condition est vraie se trouve après la flèche (<-) à la toute fin, ici NA.
+
+On recode ici les variables "an_naissance" et "income" afin d'en retirer les valeurs indésirables.
+
+```{r base_recode_cond}
+base$an_naissance[base$an_naissance == 1000] <- NA
+
+base$income[base$income < 1000 | base$income > 10000000] <- NA
+```
+
+## *Créer une nouvelle variable*
+
+La création d'une variable se produit lorsque l'on attribue la valeur d'une variable à un nouvel objet, un noveau "nom", qui n'existe pas encore. On peut créer une nouvelle variable à l'aide d'une simple opération mathématique ou par une condition plus complexe.
+
+
+
+
+### Par la fonction recode
+
+Si le résultat de la fonction recode() est sauvegardé dans une variable qui n'existe pas encore, une nouvelle variable sera crée dans la base de données.
+
+```{r base_var_recode}
+base$a_vote <- recode(base$p.voted, '1="Oui" ; 2="Non" ; else=NA')
+```
+
+
+
+### Par une opération mathématique
+
+On peut effectuer une simple opération mathématique sur toutes les valeurs d'une variable et sauvegarder le résultat dans une nouvelle variable.
+
+On crée ici la nouvelle variable "age" en soustrayant l'année de réponse au questionnaire (2015) et l'année de naissance de la personne.
+
+```{r base_var_math}
+base$age <- 2015 - as.numeric(base$an_naissance)
+```
+
+
+### Par une ou plusieurs conditions
+
+Le processus est exactement le même que pour le recodage des valeurs par une condition, mais on sauvegarde le résultat dans une nouvelle variable plutôt qu'en écraser une déjà existante.
+
+```{r base_var_cond}
+base$agecat <- base$age
+base$agecat[base$agecat >= 18 & base$agecat < 40] <- 1
+base$agecat[base$agecat >= 40 & base$agecat < 60] <- 2
+base$agecat[base$agecat >= 60] <- 3
+```
+
+
+## *Filtrer une base de données*
+
+On peut filtrer une base de données selon deux objectifs : conserver seulement certaines variables (colonnes) ou seulement certaines observations (rangées).
+
+
+### Conserver seulement certaines variables (colonnes)
+
+En utilisant la fonction select() du package *dplyr*, on peut insérer le nom de la base de données en premier argument, puis seulement énumérer les noms des variables désirées en les séparant par des virgules. Cette fonction permet de sauvegarder dans un nouvel objet une base de données épurée qui contient seulement les variables (colonnes) que l'on souhaite conserver.
+
+```{r base_var_select}
+base2 <- select(base, sex.r, age, agecat, p.intpol, a_vote, income)
+base2
+```
+
+### Conserver seulement certaines observations (rangées)
+
+On peut aussi utiliser la fonction filter() pour conserver seulement certaines observations (rangées) en fonction d'une condition. On peut alors créer une base de données filtrée en fonction d'une caractéristique précise, par exemple une base qui ne contient que des femmes, de la manière suivante :
+
+```{r base_obs_filter}
+base_femmes <- filter(base, sex.r == 2)
+base_femmes
+```
+
+# **L'ANALYSE UNIVARIÉE**
+
+
+## *Variable qualitative*
+
+La fonction univar_quali() du package personnalisé (EPA) permet d'afficher le mode et les fréquences des valeurs, ce qui offre un aperçu très clair de la distribution avec laquelle on travaille. Cette fonction est nécessaire afin de bien comprendre comment les individus répondant à un sondage, par exemple, ont répondu à une question en particulier. N'hésitez pas à utiliser cette fonction à outrance.
+
+Par défaut, le second argument caché "na.rm" a la valeur "TRUE", ce qui permet de ne pas considérer les NA dans l'équation. Si vous désirez considérer les NA, vous pouvez ajouter une virgule suivie de "na.rm = FALSE" après "base$a_vote" avant la fin de la parenthèse.
+
+```{r univar_quali}
+freq_vote <- univar_quali(base$a_vote)
+```
+
+
+## *Variable quantitative*
+
+Suivant le même principe que pour une variable qualitative, la fonction univar_quanti() du package personnalisé (EPA) permet d'obtenir des informations importantes quant à la description d'une distribution, mais cette fois-ci pour une variable quantitative. Cette fonction sauvegarde, dans un seul nouvel objet, une liste de trois mesures : la moyenne, la médiane et l'écart-type. Ces trois valeurs peuvent ensuite être accédées individuellement comme si l'on accédait à une variable dans une base de données, avec le symbole de dollar (\$).
+
+Tout comme pour la fonction précédente, le second argument "na.rm" a la valeur "TRUE" par défaut, ce qui permet de ne pas considérer les NA dans l'équation. Si vous désirez considérer les NA, vous pouvez inscrire "na.rm = FALSE" comme second argument, toujours précédé d'une virgule et à l'intérieur des parenthèses.
+
+```{r univar_quanti}
+income_univar <- univar_quanti(base$income)
+```
+
+```{r, eval=FALSE}
+income_univar$moyenne
+income_univar$mediane
+income_univar$ecart_type
+```
+
+
+# **ANALYSE BIVARIÉE**
+
+L'analyse bivariée contient au moins quatre étapes cruciales pour bien être exécutée : le recodage des variables, la mesure de significativité (p \< 0.05), la mesure de la taille de l'effet et la présentation visuelle des données. Les étapes nécessaires au recodage des variables ont déjà été exposées précédemment dans ce guide. La présentation visuelle des données se fera à partir du *Grammar of Graphics* utilisé par le package [ggplot2](https://en.wikipedia.org/wiki/Ggplot2).
+
+Pour tous les types de croisement, les étapes à suivre seront donc les mêmes :
+
+1. Recodage des variables
+2. Test de significativité (p \< 0.05)
+3. Mesure de taille de l'effet
+4. Présentation visuelle des données croisées
+
+Voici maintenat un tableau qui présente les différentes mesures de taille de l'effet et les bornes qui permettent de déterminer la force de la relation entre les deux variables. Ces bornes sont présentées pour les trois types de croisements principalement utilisés en science politique :
+
+1. Croisement entre deux variables qualitatives (catégorielles) ;
+2. croisement entre une variable qualitative et une variable quantitative ;
+3. croisement entre deux variables quantitatives.
+
+## *Mesures de taille de l'effet et leurs bornes associées*
+
+\*À noter ici que le tableau présente quatre type de croisement puisque le second croisement, entre une variable qualitative et une quantitative, utilisera des mesures de taille de l'effet différentes selon si la variable qualitative est dichotomique (seulement deux valeurs possibles [1,0]) ou polytomique ordinale (plus de deux valeurs possibles [1,2,3,4...]). Si la variable qualitative est polytomique nominale dans ce type de croisement, on utilisera tout simplement une ANOVA sans mesure de taille de l'effet.
+
+|   Type de croisement   | Mesure de taille de l'effet | Petite  | Moyenne | Grande  |
+|:-------------:|:-----------------:|:-----------:|:-----------:|:-----------:|
+|     Quali + Quali      |         V de Cramer         |   0.1   |   0.3   |   0.5   |
+| Quali (dicho) + Quanti |         D de Cohen          |   0.2   |   0.5   |   0.8   |
+| Quali (poly ordo.) + Quanti  |       tau de Kendall        | (-) 0.1 | (-) 0.3 | (-) 0.5 |
+|    Quanti + Quanti     |        r de Pearson         | (-) 0.1 | (-) 0.3 | (-) 0.5 |
+
+
+
+## *Deux variables qualitatives*
+
+### Recodage
+
+Dans cet exemple, nous utiliserons les variables "sex.r" et "p.voted" pour vérifier s'il y a un lien entre le sexe et l'abstention électorale.
+
+Avant de croiser ces deux variables, on se doit de vérifier leurs valeurs afin de voir s'il faut procéder à un recodage. On peut vérifier leurs valeurs selon les méthodes présentées à la section sur l'analyse univariée.
+
+```{r quali_quali_recode}
+freq_sexe <- univar_quali(base$sex.r, na.rm = FALSE)
+freq_vote <- univar_quali(base$p.voted, na.rm = FALSE)
+
+base$sexe <- recode(base$sex.r, '1="Homme" ; 2="Femme" ; else=NA')
+base$a_vote <- recode(base$p.voted, '1="Oui" ; 2="Non" ; else=NA')
+```
+
+Après ces manipulation, la variable "a_vote" prend les valeurs "Oui" ou "Non", alors que la variable "sexe" prend les valeurs "Homme" ou "Femme".
+
+
+
+### Significativité et taille de l'effet
+
+La fonction bivar_quali_quali() du package personnalisé (EPA) permet de calculer la valeur du p, la valeur du V de Cramer (mesure de taille de l'effet associée à ce type de croisement) et de présenter les données visuellement sur un tableau croisé.
+
+La fonction renvoie une liste qui contient la valeur du p et le V de Cramer. Cette liste peut être sauvegardée dans un nouvelle objet et on peut ensuite accéder aux deux valeurs à l'aide du signe de dollar (\$).
+
+```{r p_V_quali_quali}
+p_V_sexe_vote <- bivar_quali_quali(base$sexe, base$a_vote)
+
+p <- p_V_sexe_vote$p_value
+p
+
+v <- p_V_sexe_vote$V_Cramer
+v
+```
+
+### Présentation visuelle
+
+Deux variables qualitatives à analyser peuvent être croisées à l'aide d'un tableau de contingence (ou tableau croisé), comme celui qui a été généré automatiquement à l'étape précédente. Ce tableau de contingence est composé de cellules (cases) qui contiennent chacune un nombre d'observations associées à une valeur de Y ET à une valeur de X.
+
+Pour avoir une plus grande pertinence analytique, ce nombre d'observation est généralement présenté en pourcentage, prenant comme total une valeur possible de la variable en colonnes ou une de la variable en rangées, selon la position de la variable de groupement (la variable indépendante).
+
+1. Il faut d'abord différencier les deux variables que nous traitons et ce qu'elles représentent.
+    - Quelle variable représente l'ensemble à analyser, la variable de groupement ? (la variable indépendante)
+    - Quelle variable représente la caractéristique à analyser en fonction de la variable de groupement ; ce qui mesure la différence que l'on souhaite observer entre les groupes ? (la variable dépendante)
+2. Il faut ensuite observer le tableau croisé et déterminer si la variable de groupement (variable indépendante) est placée en colonnes ou en rangées.
+    - Si la variable de groupement (variable indépendante) est placée en colonnes, on regardera le pourcentage de colonnes. (3e chiffre de la cellule)
+    - Si la variable de groupement (variable indépendante) est placée en rangées, on regardera le pourcentage de rangées. (2e chiffre de la cellule).
+
+Ce tableau de contingence a été produit automatiquement par la fonction précédente. Pour les présenter de manière esthétiquement appropriée pour votre rendu, il suffit de créer un tableau plus soigné manuellement dans Excel ou dans Word à partir des chiffres du tableau brut présenté par R.
+
+Pour reproduire manuellement le même tableau et le personnaliser d'avantage, il est possible d'utiliser directement la fonction CrossTable().
+
+```{r cross_table}
+CrossTable(base$a_vote, base$sexe,
+  prop.c = TRUE,
+  prop.r = FALSE,
+  prop.t = FALSE,
+  prop.chisq = FALSE,
+  format = "SPSS"
+)
+```
+
+Il est aussi possible de présenter graphiquement les données d'un tableau croisé, bien que cette méthode de présentation ne soit pas toujours la plus appropriée. Il faut donc bien comprendre les données que nous désirons présenter et faire preuve de jugement. Dans cette exemple, la proportion d'hommes et de femmes qui ont voté et qui se sont abstenu est tellement similaire que les deux bandes sont presque identiques.
+
+```{r graph_bandes_supp}
+
+# Graphique à bandes superposées (ou bandes divisées)
+
+# Filtrer pour retirer les NAs
+data <- filter(base, !is.na(sexe) & !is.na(a_vote))
+
+graph_sexe_vote <- ggplot() +
+  geom_bar(
+    data = data,
+    mapping = aes(
+      x = sexe,
+      fill = a_vote
+    ),
+    position = "fill",
+    color = "black"
+  ) +
+  scale_fill_brewer(palette = "Greens") +
+  scale_y_continuous(
+    breaks = seq(0, 1, .1),
+    expand = expansion(mult = c(0, .05)),
+    label = percent
+  ) +
+  labs(
+    title = "Croisement entre deux variables qualitatives (sexe et vote)",
+    x = "Sexe",
+    y = "Proportion",
+    fill = "Vote"
+  ) +
+  theme_defaut(
+    couleur = "#018849",
+    grille = "h",
+    grille_top = FALSE
+  )
+
+graph_sexe_vote
+```
+
+## *Une variable qualitative et une quantitative*
+
+### Variable indépendante qualitative dichotomique (1 ou 0, "Oui" ou "Non")
+
+#### Recodage
+
+Dans cet exemple, nous utiliserons les variables "sex.r" et "income" pour vérifier s'il y a un lien entre le sexe et le revenu.
+
+Avant de croiser ces deux variables, on se doit de vérifier leurs valeurs afin de voir s'il faut procéder à un recodage. On peut vérifier leurs valeurs selon les méthodes présentées à la section l'analyse univariée.
+
+\*Pour cet exemple, nous avons circonsrit la variable de revenu aux personnes qui gagnent entre 5000\$ et 250000\$ afin de retirer les valeurs absurdes de l'échantillon. Cette manipulation permet une meilleure présentation visuelle des données sur un graphique, mais il faut garder en tête qu'elle représente un énorme raccourci méthodologique dans le cadre d'une recherche plus sérieuse.
+
+```{r quali_quanti_D_recode}
+freq_sexe <- univar_quali(base$sex.r, na.rm = TRUE)
+freq_revenu <- univar_quanti(base$income, na.rm = TRUE)
+
+base$sexe <- recode(base$sex.r, '1="Homme" ; 2="Femme" ; else=NA')
+base$revenu <- base$income
+base$revenu[base$revenu <= 5000 | base$revenu >= 250000] <- NA
+```
+
+Après ces manipulations, la variable "revenu" est quantitative continue entre 5000 et 250000, alors que la variable "sexe" est qualitative dichotomique et prend les valeurs "Homme" ou "Femme".
+
+#### Significativité et taille de l'effet
+
+Lorsque la variable qualitative est dichotomique, il faut utiliser le D de Cohen pour mesurer la différence entre les deux valeurs possible de la variable indépendante (X).
+
+La fonction bivar_quali_quanti() du package personnalisé (EPA) permet de calculer la valeur du p, la valeur du D de Cohen et de présenter un tableau qui montre la moyenne de la variable dépendante (Y) pour chaque groupe (valeurs possibles de la VI).
+
+La fonction renvoie une liste qui contient la valeur du p et le D de Cohen. Cette liste peut être sauvegardée dans un nouvelle objet et on peut ensuite accéder aux deux valeurs à l'aide du signe de dollar (\$).
+
+```{r p_D_quali_quanti}
+p_D_sexe_revenu <- bivar_quali_quanti(base$sexe, base$revenu)
+
+p <- p_D_sexe_revenu$p_value
+p
+
+D <- p_D_sexe_revenu$D_Cohen
+D
+```
+
+#### Présentation visuelle
+
+Pour visualiser la différence entre les moyennes de plusieurs groupes distincts, on peut utiliser un graphique en violon (ou graphique en boîte à moustaches).
+
+Le graphique en violon permet d'observer la densité d'observation sur l'échelle continue de la variable dépendante pour chaque groupe, alors que le graphique en boîte à moustache montre principalement l'emplacement de la médiane (trait le plus au centre) et des quartiles inférieur et supérieur à celle-ci (ceux qui coupent l'échantillon à 25% et 75%). Ces deux mesures sont représentées par les bornes inférieures et supérieure de la "boîte" du graphique en boîte à moustache.
+
+Il est possible de faire apparaître un seul graphique qui présente les deux de manière superposée avec le bloc de code suivant.
+
+```{r graph_violon_box_1}
+# Graphique en violons + boîtes à moustaches
+data <- filter(base, !is.na(sexe) & !is.na(revenu))
+
+violin_box <- ggplot() +
+  geom_violin(
+    data = data,
+    mapping = aes(x = sexe, y = revenu, group = sexe),
+    fill = "#018849",
+    color = "black"
+  ) +
+  geom_boxplot(
+    data = data,
+    aes(x = sexe, y = revenu, group = sexe),
+    width = 0.2,
+    notch = TRUE,
+    fill = "#01FA85",
+    outlier.color = "#01FA85",
+    outlier.size = 2
+  ) +
+  scale_y_continuous(
+    breaks = seq(0, 350000, 25000),
+    expand = expansion(mult = c(0, .05)),
+    labels = dollar_format()
+  ) +
+  labs(
+    title = "Croisement entre une variable qualitative\n dichotomique et une quantitative",
+    x = "Sexe",
+    y = "Salaire annuel"
+  ) +
+  theme_defaut(
+    couleur = "#018849",
+    grille = "h",
+    grille_top = TRUE
+  )
+
+violin_box
+```
+
+### Variable indépendante qualitative polytomique nominale ("Jaune", "Bleu", "Rouge", etc.)
+
+#### Recodage
+
+Pour cet exemple de croisement bivarié, nous utiliserons les variables "provinces" et "income" pour vérifier s'il y a un lien entre la province de résidence et le revenu.
+
+Comme d'habitude, il faut vérifier les valeurs possibles des variables afin de voir s'il faut procéder à un recodage. On peut vérifier leurs valeurs selon les méthodes présentées à la section l'analyse univariée.
+
+\*Pour cet exemple, nous avons circonsrit la variable de revenu aux personnes qui gagnent entre 5000\$ et 250000\$ afin de retirer les valeurs absurdes de l'échantillon. Cette manipulation permet une meilleure présentation visuelle des données, mais il faut garder en tête qu'elle représente un énorme raccourci méthodologique dans le cadre d'une recherche.
+
+```{r quali_quanti_ANOVA_recode}
+freq_provinces <- univar_quali(base$province, na.rm = FALSE)
+freq_revenu <- univar_quanti(base$income, na.rm = TRUE)
+
+base$provinces <- recode(base$province, '1="Alberta" ;
+                            2="Colombie-Britannique" ;
+                            3="Manitoba" ;
+                            c(4,5,7,10)="Maritimes" ;
+                            c(6,8,13)="Territoires" ;
+                            9="Ontario" ;
+                            11="Québec" ;
+                            12="Saskatchewan" ;
+                            else=NA')
+base$revenu <- base$income
+base$revenu[base$revenu <= 5000 | base$revenu >= 250000] <- NA
+```
+
+Après ces manipulation, la variable "revenu" est continue entre 5000 et 250000, alors que la variable "provinces" prend les valeurs de chaque provinces, en regroupant les maritimes et les territoires.
+
+#### Significativité et taille de l'effet
+
+Lorsque la variable indépendante qualitative est polytomique non-ordonnée, il faut comparer les différents groupes à l'aide d'une analyse de la variance (ANOVA). L'ANOVA nécessite des tests d'hypothèses plus approfondis pour arriver à offrir un équivalent de la mesure de la taille de l'effet. L'ANOVA, en elle-même, ne fait qu'informer s'il existe au moins seule différence significative entre deux valeurs possibles de la variable indépendante (X), sans toutefois identifier quels groupes sont concernés.
+
+La fonction bivar_quali_quanti() du package personnalisé (EPA) permet de calculer la valeur du p et de présenter un tableau qui montre la moyenne de la variable dépendante (Y) pour chaque groupe (valeurs possibles de la VI). En plus de cela, la fonction calcule automatiquement toutes les combinaisons possibles de comparaisons de moyennes entre deux groupes. Elle affiche ce résultat sous forme d'un grand tableau.
+
+La fonction renvoie une liste qui contient uniquement la valeur du p. Ce résultat sous forme de liste peut être sauvegardée dans un nouvelle objet accessible à l'aide du signe de dollar (\$).
+
+```{r p_quali_quanti}
+p_provinces_revenu <- bivar_quali_quanti(base$provinces, base$revenu)
+
+p <- p_provinces_revenu$p_value
+p
+```
+
+#### Présentation visuelle
+
+Pour visualiser la différence entre les moyennes de plusieurs groupes distincts, on peut utiliser un graphique en violon (ou graphique en boîte à moustaches).
+
+Le graphique en violon permet d'observer la densité d'observation sur l'échelle continue de la variable dépendante pour chaque groupe, alors que le graphique en boîte à moustache montre principalement l'emplacement de la médiane (trait le plus au centre) et des quartiles inférieur et supérieur à celle-ci (ceux qui coupent l'échantillon à 25% et 75%). Ces deux mesures sont représentées par les bornes inférieures et supérieure de la "boîte" du graphique en boîte à moustache.
+
+Il est possible de faire apparaître un seul graphique qui présente les deux de manière superposée avec le bloc de code suivant.
+
+Ce graphique n'est toutefois pas toujours ajusté adéquatement à l'horizontal, surtout lorsqu'il y a trop de valeurs possibles de X. On peut alors inverser les axes en ajoutant "+ coord_flip()" juste avant l'argument "theme_defaut()" et/ou insérer "+ theme(axis.text.x = element_text(angle = 45, hjust = 1))" juste après celui-ci.
+
+```{r graph_violon_box_2}
+# Graphique en violons + boîtes à moustaches
+data <- filter(base, !is.na(provinces) & !is.na(revenu))
+
+violin_box <- ggplot() +
+  geom_violin(
+    data = data,
+    mapping = aes(x = provinces, y = revenu, group = provinces),
+    fill = "#018849",
+    color = "black"
+  ) +
+  geom_boxplot(
+    data = data,
+    aes(x = provinces, y = revenu, group = provinces),
+    width = 0.2,
+    notch = TRUE,
+    fill = "#01FA85",
+    outlier.color = "#01FA85",
+    outlier.size = 2
+  ) +
+  scale_y_continuous(
+    breaks = seq(0, 350000, 25000),
+    expand = expansion(mult = c(0, .05)),
+    labels = dollar_format()
+  ) +
+  labs(
+    title = "Croisement entre une variable qualitative\npolytomique nominale et une quantitative",
+    x = "Provinces et territoires",
+    y = "Salaire annuel"
+  ) +
+  theme_defaut(
+    couleur = "#018849",
+    grille = "h",
+    grille_top = TRUE
+  ) +
+  theme(axis.text.x = element_text(angle = 20, hjust = 0.9))
+
+violin_box
+```
+
+### Variable indépendante qualitative polytomique ordonnée ("Élevé","Moyen","Faible", etc.)
+
+#### Recodage
+
+Dans cet exemple, nous utiliserons les variables "p.intpol" et "income" pour vérifier s'il y a un lien entre l'intérêt pour la politique et le revenu.
+
+Avant de croiser ces deux variables, on se doit de vérifier leurs valeurs afin de voir s'il faut procéder à un recodage. On peut vérifier leurs valeurs selon les méthodes présentées à la section l'analyse univariée.
+
+\*Pour cet exemple, nous avons circonsrit la variable de revenu aux personnes qui gagnent entre 5000\$ et 250000\$ afin de retirer les valeurs absurdes de l'échantillon. Cette manipulation permet une meilleure présentation visuelle des données, mais il faut garder en tête qu'elle représente un énorme raccourci méthodologique dans le cadre d'une recherche.
+
+```{r quali_quanti_T_recode}
+freq_interet <- univar_quali(base$p.intpol, na.rm = TRUE)
+freq_revenu <- univar_quanti(base$income, na.rm = TRUE)
+
+base$polint <- recode(base$p.intpol, "c(1,2,3)=1 ; c(4,5)=2 ; c(6,7)=3 ; c(8,9,10)=4 ; else=NA")
+base$revenu <- base$income
+base$revenu[base$revenu <= 5000 | base$revenu >= 250000] <- NA
+```
+
+Après ces manipulation, la variable "revenu" est continue entre 5000 et 250000, alors que la variable "polint" prend les valeurs suivantes: 1 pour "Très faible", 2 pour "Faible", 3 pour "Fort" ou 4 pour "Très fort".
+
+
+
+#### Significativité et taille de l'effet
+
+Lorsque la variable indépendante qualitative est polytomique ordinale, il faut utiliser le Tau de Kendall pour mesurer la différence entre les valeurs possible de la variable indépendante (X).
+
+La fonction bivar_quali_quanti() du package personnalisé (EPA) permet de calculer la valeur du p, la valeur du Tau de Kendall et de présenter un tableau qui montre la moyenne de la variable dépendante (Y) pour chaque groupe (valeurs possibles de la VI).
+
+La fonction renvoie une liste qui contient la valeur du p et le Tau de Kendall. Cette liste peut être sauvegardée dans un nouvelle objet et on peut ensuite accéder aux deux valeurs à l'aide du signe de dollar (\$).
+
+```{r p_T_quali_quanti}
+p_Tau_polint_revenu <- bivar_quali_quanti(base$polint, base$revenu, y_ord = TRUE)
+
+p <- p_Tau_polint_revenu$p_value
+p
+
+Tau <- p_Tau_polint_revenu$tau_Kendall
+Tau
+```
+
+#### Présentation visuelle
+
+Pour visualiser la différence entre plusieurs groupes distincts, on peut utiliser un graphique en violon (ou graphique en boîte à moustaches).
+
+Le graphique en violon permet d'observer la densité d'observation sur l'échelle continue de la variable dépendante pour chaque groupe, alors que le graphique en boîte à moustache montre principalement l'emplacement de la médiane (trait le plus au centre) et des quartiles inférieur et supérieur à celle-ci (ceux qui coupent l'échantillon à 25% et 75%). Ces deux mesures sont représentées par les bornes inférieures et supérieure de la "boîte" du graphique en boîte à moustache.
+
+Il est possible de faire apparaître un seul graphique qui présente les deux de manière superposée avec le bloc de code suivant.
+
+```{r graph_violon_box_3}
+# Graphique en violons + boîtes à moustaches
+data <- filter(base, !is.na(polint) & !is.na(revenu))
+
+violin_box <- ggplot() +
+  geom_violin(
+    data = data,
+    mapping = aes(x = polint, y = revenu, group = polint),
+    fill = "#018849",
+    color = "black"
+  ) +
+  geom_boxplot(
+    data = data,
+    aes(x = polint, y = revenu, group = polint),
+    width = 0.2,
+    notch = TRUE,
+    fill = "#01FA85",
+    outlier.color = "#01FA85",
+    outlier.size = 2
+  ) +
+  scale_y_continuous(
+    breaks = seq(0, 350000, 25000),
+    expand = expansion(mult = c(0, .05)),
+    labels = dollar_format()
+  ) +
+  labs(
+    title = "Croisement entre une variable qualitative\npolytomique ordinale et une quantitative",
+    x = "Intérêt pour la politique",
+    y = "Salaire annuel"
+  ) +
+  theme_defaut(
+    couleur = "#018849",
+    grille = "h",
+    grille_top = TRUE
+  )
+
+violin_box
+```
+
+
+## *Deux variables quantitatives*
+
+Puisque  les  données  quantitatives  possèdent  généralement  un  nombre  presque  infini  de  valeurspossibles, leur traitement diverge légèrement de celui des variables qualitatives. Il est, par exemple,impossible  d'effectuer  un  tableau  ou  un  tableau  croisé  avec  des  données  quantitatives,  puisqueceux-ci contiendraient un nombre ridiculement grand de colonnes et de rangées. Nous allons plutôteffectuer les étapes suivantes pour les données quantitatives.
+
+### Recodage
+
+Avant de croiser deux variables quantitatives entre elles, il est de mise d'effectuer un traitement des données sélectionnées afin de ne conserver que les valeurs désirées. Croisons maintenant les variables « age » et « feel.musl » en recodant la variable « age » en âge réel plutôt qu'en année de naissance, et en retirant les personnes qui ont répondu « 1000 » à la question sur l'âge et sur l'échelle de 0 à 100 pour l'appréciation des personnes musulmanes.
+
+```{r quanti_quanti_r_recode}
+
+freq_age <- univar_quanti(base$age, na.rm = TRUE)
+freq_revenu <- univar_quanti(base$income, na.rm = TRUE)
+
+base$age <- base$an_naissance
+base$age[base$age == 1000] <- NA
+base$age <- 2015 - as.numeric(base$age)
+
+base$revenu <- base$income
+base$revenu[base$revenu <= 5000 | base$revenu >= 250000] <- NA
+```
+
+### Significativité et taille de l'effet
+
+Pour un croisement entre deux variables quantitatives, on doit mesurer la relation à l'aide du coefficient de corrélation (r de Pearson) et du coefficient de corrélation (R2 ou R carré) afin de vérifier si les deux variables varient significativement de manière proportionnelle ou inversement proportionnelle.
+
+La fonction bivar_quanti_quanti() du package personnalisé permet de calculer la valeur du p, la valeur du r de Pearson et celle du R carré, en plus de produire l'analyse du modèle de régression linéaire. La fonction finie par présenter un graphique rudimentaire de la relation entre les deux variables qui inclue la droite de régression et son équation.
+
+La fonction renvoie une liste qui contient la valeur du p, le r de Pearson et le R2. Cette liste peut être sauvegardée dans un nouvelle objet et on peut ensuite accéder aux deux valeurs à l'aide du signe de dollar (\$).
+
+```{r p_r_r2_quanti_quanti}
+p_r_r2_age_revenu <- bivar_quanti_quanti(base$age, base$revenu)
+
+p_r_r2_age_revenu$p_value
+p_r_r2_age_revenu$r_Pearson
+p_r_r2_age_revenu$R2
+```
+
+### Présentation visuelle
+
+Pour un croisement entre deux variables quantitatives, les données doivent être présentées sur ungraphique par un nuage de points des valeurs réelles et une droite de régression qui offre un aperçudes  valeurs  estimées  par  le  modèle.
+
+```{r graph_nuage_points}
+# Graphique en nuage de points avec droite de régression et équation
+data <- filter(base, !is.na(age) & !is.na(revenu))
+
+nuage <- ggplot() +
+  geom_point(
+    data = data,
+    mapping = aes(x = age, y = revenu),
+    stat = "identity",
+    shape = 19,
+    color = "#018849"
+  ) +
+  geom_smooth(
+    data = data,
+    mapping = aes(x = age, y = revenu),
+    method = "lm",
+    formula = y ~ x, # y ~ poly(x, 2) --> permet une formule quadratique
+    se = TRUE, # FALSE enlève la zone d'erreur
+    color = "blue"
+  ) +
+  geom_label_repel(
+    x = max(data$age) * 0.9,
+    y = max(data$revenu) * 0.9,
+    mapping = aes(label = lm_eq(data$age, data$revenu)),
+    box.padding = 0.5,
+    point.padding = 0.5,
+    fill = "#018849",
+    color = "white",
+    vjust = "inward",
+    hjust = "inward",
+    parse = TRUE
+  ) +
+  scale_x_continuous(
+    breaks = seq(18, 115, 10),
+    expand = expansion(mult = c(0, 0))
+  ) +
+  scale_y_continuous(
+    breaks = seq(0, 350000, 25000),
+    labels = dollar_format(),
+    expand = expansion(mult = c(0, 0))
+  ) +
+  labs(
+    title = "Croisement entre deux variables quantitatives",
+    x = "Âge",
+    y = "Salaire annuel"
+  ) +
+  theme_defaut(
+    couleur = "#018849",
+    grille = "hv",
+    grille_top = TRUE
+  )
+nuage
+```
